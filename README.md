@@ -1,4 +1,4 @@
-**MobSpawnSettings** 是专为生存模式开发的插件。其提供了生物生成控制功能，允许管理员自定义生物生成的黑白名单、突破原版区块密度限制等。
+**MobSpawnSettings** 是专为生存模式开发的插件，其提供了生物自然生成控制功能，允许管理员自定义生物生成的黑白名单、突破原版区块密度限制等。
 
 ---
 
@@ -27,7 +27,11 @@
 5. **修改生物生成速度**
 
     - 加快生物生成速度
-    
+
+5. **正则表达式的支持**
+
+    - 用正则表达式更高效的配置生成规则
+
 ---
 
 ## 配置文件 (config.json)
@@ -37,7 +41,7 @@
 ### 默认配置
 ``` json5
 {
-    "version": 8,
+    "version": 9,
     "whitelistMode": false,             // 工作模式: true=白名单 false=黑名单
     "enableFamilyFilter": true,         // 是否启用族过滤
     "targetFamilies": [
@@ -48,6 +52,7 @@
         "minecraft:creeper"             // 目标 ID
     ],
     "densityMultiplier": 4.0,           // 局部密度倍率 (大于 1.0 增加密度，小于则减少)
+    "useRegex": true,                   // 是否启用正则表达式 启用后支持 ^minecraft: 这样的填写方式
     "globalCapMultiplier": 4.0,         // 全局上限倍率 (大于 1.0 为提高，小于则减少)
     "spawnSpeed": 2                     // 尝试生成速度 设置为 2 表示每刻尝试生成 2 次
 }
@@ -57,11 +62,11 @@
 
 ### 禁止苦力怕生成
 
-不想要苦力怕生成去炸家。
+不想生成苦力怕去炸家。
 
 ``` json
 {
-    "version": 8,
+    "version": 9,
     "whitelistMode": false,
     "enableFamilyFilter": true,
     "targetFamilies": [
@@ -70,6 +75,7 @@
     "enableIdentifierFilter": false,
     "targetMonsterIds": [],
     "densityMultiplier": 1.0,
+    "useRegex": false,
     "globalCapMultiplier": 1.0,
     "spawnSpeed": 1
 }
@@ -77,17 +83,18 @@
 
 ### 刷怪塔优化 (高密度)
 
-允许所有怪生成，提高生成上限。
+允许所有怪生成，提高生成上限和速度。
 
 ``` json
 {
-    "version": 8,
+    "version": 9,
     "whitelistMode": false,
     "enableFamilyFilter": false,
     "targetFamilies": [],
     "enableIdentifierFilter": false,
     "targetMonsterIds": [],
     "densityMultiplier": 4.0,
+    "useRegex": false,
     "globalCapMultiplier": 4.0,
     "spawnSpeed": 100
 }
@@ -95,23 +102,24 @@
 
 ### 整活（别在正式服里玩）
 
-加快生成速度和生成上限。
+这会卡死的。
 
 ``` json
 {
-    "version": 8,
+    "version": 9,
     "whitelistMode": false,
     "enableFamilyFilter": false,
     "targetFamilies": [],
     "enableIdentifierFilter": false,
     "targetMonsterIds": [],
     "densityMultiplier": 2048.0,
+    "useRegex": false,
     "globalCapMultiplier": 32.0,
-    "spawnSpeed": 1000
+    "spawnSpeed": 2000
 }
 ```
 
-_注：黑名单模式下列表为空 = 允许所有生物_
+_黑名单模式下列表为空 = 允许自然生成所有可生成的生物_
 
 ---
 
@@ -125,7 +133,7 @@ _注：黑名单模式下列表为空 = 允许所有生物_
 
 ### 使用 LIP
 
-`lip install github.com/RE-Studio-CN/MobSpawnSetting`
+`lip install github.com/PuceLi/MobSpawnSetting`
 
 ### 手动安装
 

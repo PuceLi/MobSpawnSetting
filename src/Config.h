@@ -8,7 +8,7 @@
 namespace SpawnerSetting {
 
 struct Config {
-    int version = 8;
+    int version = 9;
 
     bool whitelistMode = false;
 
@@ -20,6 +20,8 @@ struct Config {
 
     float densityMultiplier = 1.0f;
     float globalCapMultiplier = 1.0f;
+
+    bool useRegex = false;
 
     // 设置为 2 表示 2 倍速 即每刻尝试生成 2 次
     int spawnSpeed = 2;

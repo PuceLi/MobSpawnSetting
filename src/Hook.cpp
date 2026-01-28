@@ -13,6 +13,8 @@
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
 
 #include <string>
+#include <regex>
+#include <array>
 
 using namespace ll::literals::memory_literals;
 
@@ -75,11 +77,22 @@ LL_AUTO_TYPE_INSTANCE_HOOK(
     }
 
     if (config.enableIdentifierFilter) {
-        std::string myId = this->getActorIdentifier().getFullName();
+        std::string myId = (std::string const&)this->getActorIdentifier().mFullName;
         for (const auto& targetId : config.targetMonsterIds) {
-            if (myId == targetId) {
-                isIdMatch = true;
-                break;
+            if (config.useRegex) {
+                try {
+                    std::regex pattern(targetId);
+                    if (std::regex_search(myId, pattern)) {
+                        isIdMatch = true;
+                        break;
+                    }
+                } catch (...) {
+                }
+            } else {
+                if (myId == targetId) {
+                    isIdMatch = true;
+                    break;
+                }
             }
         }
     }
@@ -98,8 +111,8 @@ LL_AUTO_TYPE_INSTANCE_HOOK(
 LL_AUTO_STATIC_HOOK(
     SpawnerTickHook,
     ll::memory::HookPriority::Normal,
-    "48 8B C4 4C 89 48 20 55 53 56 57 41 54 41 55 41 56 41 57 48 8D"_sig,
-    // 1.21.130.4: 48 8B C4 4C 89 48 ? 55
+    "48 8B C4 4C 89 48 ? 55"_sig,
+    // 1.21.130.4
     void,
     ::Spawner* spawner,
     ::BlockSource& region,
