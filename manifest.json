@@ -2,6 +2,8 @@
     "name": "${modName}",
     "entry": "${modFile}",
     "version": "${modVersion}",
+    "author": "PuceLi",
     "type": "native",
+    "description": "控制生物自然生成",
     "platform": "${modPlatform}"
 }

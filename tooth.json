@@ -1,35 +1,35 @@
 {
   "format_version": 3,
   "format_uuid": "289f771f-2c9a-4d73-9f3f-8492495a924d",
-  "tooth": "github.com/LiteLDev/levilamina-mod-template",
-  "version": "0.0.0",
+  "tooth": "github.com/PuceLi/MobSpawnSetting",
+  "version": "4.1.0",
   "info": {
-    "name": "My Mod",
-    "description": "Description of my mod",
+    "name": "MobSpawnSetting",
+    "description": "控制生物生成",
     "tags": [
       "platform:levilamina",
       "type:mod"
     ],
-    "avatar_url": "https://example.com/my-mod/avatar.png"
+    "avatar_url": ""
   },
   "variants": [
     {
       "label": "",
       "platform": "win-x64",
       "dependencies": {
-        "github.com/LiteLDev/LeviLamina": "1.8.*"
+        "github.com/LiteLDev/LeviLamina": ">=1.7.0"
       },
       "assets": [
         {
           "type": "zip",
           "urls": [
-            "https://{{tooth}}/releases/download/v{{version}}/levilamina-mod-template-server-windows-x64.zip"
+            "https://{{tooth}}/releases/download/v{{version}}/MobSpawnSetting-server-windows-x64.zip"
           ],
           "placements": [
             {
               "type": "dir",
-              "src": "my-mod/",
-              "dest": "plugins/my-mod/"
+              "src": "MobSpawnSetting/",
+              "dest": "plugins/MobSpawnSetting/"
             }
           ]
         }
@@ -57,13 +57,13 @@
         {
           "type": "zip",
           "urls": [
-            "https://{{tooth}}/releases/download/v{{version}}/levilamina-mod-template-client-windows-x64.zip"
+            "https://{{tooth}}/releases/download/v{{version}}/MobSpawnSetting-client-windows-x64.zip"
           ],
           "placements": [
             {
               "type": "dir",
-              "src": "my-mod/",
-              "dest": "mods/my-mod/"
+              "src": "MobSpawnSetting/",
+              "dest": "mods/MobSpawnSetting/"
             }
           ]
         }

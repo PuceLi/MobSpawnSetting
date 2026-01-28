@@ -27,13 +27,13 @@ jobs:
             xmake-
 
       - run: |
-          xmake repo -u
+          xmake repo -u -v -D -y
 
       - run: |
-          xmake f -a x64 -m release -p windows -v --target_type=${{ matrix.target_type }} -y
+          xmake f -a x64 -m release -p windows -v -D -y --target_type=${{ matrix.target_type }} -y
 
       - run: |
-          xmake -v -y
+          xmake -v -D -y
 
       - uses: actions/upload-artifact@v6
         with:
