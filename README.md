@@ -1,77 +1,79 @@
-**MobSpawnSettings** 是专为生存模式开发的插件，其提供了生物自然生成控制功能，允许管理员自定义生物生成的黑白名单、突破原版区块密度限制等。
+**MobSpawnSettings** is a plugin specifically developed for Survival Mode. It provides comprehensive control over natural mob spawning, allowing administrators to customize white/blacklists, bypass vanilla chunk density limits, and more.
+
+[![中文](https://img.shields.io/badge/简体中文-informational?style=for-the-badge)](README_zh.md)
 
 ---
 
-## 主要功能
+## Features
 
-1. **黑/白名单控制**
-    
-    - 白名单模式：只允许配置列表中的生物家族（如 `zombie` 族）生成，其他所有自然生成的生物都会被禁止。
-    
-    - 黑名单模式：禁止配置列表中的生物生成，其他生物正常生成。适合移除某些烦人的怪物（如苦力怕）。
-    
-2. **区块密度倍增**
-    
-    - 设置为 `2.0` 或更多表示每个区块允许容纳的怪物数量翻倍。
-    
-    - 设置为 `0.5` 则减半。解决刷怪太多的问题。
-    
-3. **修改全局生物生成上限**
-    
-    - 在基岩版中，无论难度如何，自然生成的全局上限总是200。更改配置文件即可降低或提高上限。
-    
-4. **生物 ID / 族控制**
-    
-    - 可选择控制生物族或控制单个生物的生成
+1. **White/Blacklist Control**
 
-5. **修改生物生成速度**
+    - Whitelist Mode: Only allows mobs belonging to specific families (e.g., `zombie`) to spawn; all other natural spawns are prohibited.
+    
+    - Blacklist Mode: Prevents specific mobs in the configuration list from spawning while allowing others normally. Ideal for removing annoying mobs like Creepers.
 
-    - 加快生物生成速度
+2. **Chunk Density Multiplier**
+   
+   - Setting this to `2.0` or higher doubles the number of monsters allowed per chunk.
 
-5. **正则表达式的支持**
+   - Setting it to `0.5` halves the limit, effectively solving over-spawning issues.
 
-    - 用正则表达式更高效的配置生成规则
+3. **Global Spawning Cap Adjustment**
+   
+   - In Bedrock Edition, the natural global spawn cap is fixed at 200 regardless of difficulty. This plugin allows you to lower or raise this cap via the config.
+
+4. **Mob ID & Family Control**
+   
+   - Choose to control spawning based on broad biological families or individual entity IDs.
+
+5. **Spawning Speed Modification**
+   
+   - Increase the frequency of spawn attempts to make mobs appear faster.
+
+6. **Regex Support**
+   
+   - Use Regular Expressions for more efficient and flexible spawning rule configurations.
 
 ---
 
-## 配置文件 (config.json)
+## Configuration (`config.json`)
 
-首次加载后会在 `plugins/MobSpawnSettings/config.json` 生成配置文件。
+The configuration file is automatically generated at `plugins/MobSpawnSettings/config.json` after the first load.
 
-### 默认配置
-``` json5
+### Default Configuration
+
+```json5
 {
     "version": 9,
-    "whitelistMode": false,             // 工作模式: true=白名单 false=黑名单
-    "enableFamilyFilter": true,         // 是否启用族过滤
+    "whitelistMode": false,             // Work Mode: true=Whitelist, false=Blacklist
+    "enableFamilyFilter": true,         // Enable filtering by mob family
     "targetFamilies": [
-        "zombie"                        // 目标族 可参考 https://minecraft.fandom.com/zh/wiki/%E6%97%8F
+        "zombie"                        // Target families (Ref: https://minecraft.fandom.com/wiki/Family)
     ],
-    "enableIdentifierFilter": false,
+    "enableIdentifierFilter": false,    // Enable filtering by entity ID
     "targetMonsterIds": [
-        "minecraft:creeper"             // 目标 ID
+        "minecraft:creeper"             // Target Entity IDs
     ],
-    "densityMultiplier": 4.0,           // 局部密度倍率 (大于 1.0 增加密度，小于则减少)
-    "useRegex": true,                   // 是否启用正则表达式 启用后支持 ^minecraft: 这样的填写方式
-    "globalCapMultiplier": 4.0,         // 全局上限倍率 (大于 1.0 为提高，小于则减少)
-    "spawnSpeed": 2                     // 尝试生成速度 设置为 2 表示每刻尝试生成 2 次
+    "densityMultiplier": 4.0,           // Local density multiplier (>1.0 increases density)
+    "useRegex": true,                   // Enable Regex (supports patterns like ^minecraft:)
+    "globalCapMultiplier": 4.0,         // Global cap multiplier (>1.0 increases max mobs)
+    "spawnSpeed": 2                     // Spawning attempt speed (e.g., 2 = two attempts per tick)
 }
+
 ```
 
-## 配置文件示例
+## Configuration Examples
 
-### 禁止苦力怕生成
+### Disable Creepers
 
-不想生成苦力怕去炸家。
+Prevents Creepers from spawning to protect player structures.
 
-``` json
+```json
 {
     "version": 9,
     "whitelistMode": false,
     "enableFamilyFilter": true,
-    "targetFamilies": [
-        "creeper"
-    ],
+    "targetFamilies": ["creeper"],
     "enableIdentifierFilter": false,
     "targetMonsterIds": [],
     "densityMultiplier": 1.0,
@@ -79,13 +81,14 @@
     "globalCapMultiplier": 1.0,
     "spawnSpeed": 1
 }
+
 ```
 
-### 刷怪塔优化 (高密度)
+### Mob Farm Optimization (High Density)
 
-允许所有怪生成，提高生成上限和速度。
+Allows all mobs to spawn while significantly increasing the cap and spawn frequency.
 
-``` json
+```json
 {
     "version": 9,
     "whitelistMode": false,
@@ -98,46 +101,28 @@
     "globalCapMultiplier": 4.0,
     "spawnSpeed": 100
 }
+
 ```
 
-### 整活（别在正式服里玩）
-
-这会卡死的。
-
-``` json
-{
-    "version": 9,
-    "whitelistMode": false,
-    "enableFamilyFilter": false,
-    "targetFamilies": [],
-    "enableIdentifierFilter": false,
-    "targetMonsterIds": [],
-    "densityMultiplier": 2048.0,
-    "useRegex": false,
-    "globalCapMultiplier": 32.0,
-    "spawnSpeed": 2000
-}
-```
-
-_黑名单模式下列表为空 = 允许自然生成所有可生成的生物_
+> In Blacklist mode, leaving the list empty allows all naturally spawnable mobs to appear.
 
 ---
 
-## ⚠️ 性能警告
+## ⚠️ Performance Warning
 
-- **将 `globalCapMultiplier` 和 `spawnSpeed` 同时调高时会让世界上瞬间生成几百个实体**
+- **Setting `globalCapMultiplier` and `spawnSpeed` to high values simultaneously can cause hundreds of entities to spawn instantly, potentially crashing the server.**
 
 ---
 
-## 安装（服务端）
+## Installation(Server)
 
-### 使用 LIP
+### Using LIP
 
 `lip install github.com/PuceLi/MobSpawnSetting`
 
-### 手动安装
+### Manual Installation
 
-从 **Releases** 下载该插件，解压到 `plugins` 内。
+Download the latest version from **Releases** and extract it into the `plugins` folder.
 
 ---
 
