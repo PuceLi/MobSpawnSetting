@@ -12,13 +12,13 @@ jobs:
           - server
           - client
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: xmake-io/github-action-setup-xmake@v1
         # with:
         #   xmake-version: branch@master
       
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         with:
           path: |
             ~/AppData/Local/.xmake
@@ -26,16 +26,21 @@ jobs:
           restore-keys: |
             xmake-
 
-      - run: |
-          xmake repo -u -v -D -y
+      - name: Setup LLVM
+        uses: ZhongRuoyu/setup-llvm@v0
+        with:
+          llvm-version: 22
 
       - run: |
-          xmake f -a x64 -m release -p windows -v -D -y --target_type=${{ matrix.target_type }} -y
+          xmake repo -u
 
       - run: |
-          xmake -v -D -y
+          xmake f -a x64 -m release -p windows -v --target_type=${{ matrix.target_type }} -y
 
-      - uses: actions/upload-artifact@v6
+      - run: |
+          xmake -v -y
+
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ github.event.repository.name }}-${{ github.sha }}-${{ matrix.target_type }}-windows-x64
           path: |

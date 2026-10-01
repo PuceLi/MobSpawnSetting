@@ -2,7 +2,6 @@
 
 #include "ll/api/Config.h"
 #include "ll/api/mod/RegisterHelper.h"
-#include "ll/api/io/Logger.h"
 
 #include <filesystem>
 
@@ -14,23 +13,33 @@ SpawnerMod& SpawnerMod::getInstance() {
 }
 
 bool SpawnerMod::load() {
-    getSelf().getLogger().info("加载 MobSpawnSetting 中...");
-    getSelf().getLogger().info("Author: PuceLi");
+    auto& logger = getSelf().getLogger();
+    logger.info("加载 MobSpawnSetting 中...");
+    logger.info("Author: PuceLi");
 
-    std::filesystem::path configPath = getSelf().getModDir() / "config.json";
+    std::filesystem::path configPath = getSelf().getConfigDir() / "config.json";
+
     if (!ll::config::loadConfig(mConfig, configPath)) {
-        getSelf().getLogger().warn("无法读取 config.json，将生成默认配置文件...");
+        logger.warn("无法从 {} 读取配置文件", configPath.string());
+        logger.info("正在保存默认配置");
+
         if (!ll::config::saveConfig(mConfig, configPath)) {
-            getSelf().getLogger().error("无法保存配置文件");
+            logger.error("无法保存默认配置到 {}", configPath.string());
             return false;
         }
     }
 
+    logger.info("配置文件加载成功");
     return true;
 }
 
 bool SpawnerMod::enable() {
-    getSelf().getLogger().info("MobSpawnSetting 已启用");
+    auto& logger = getSelf().getLogger();
+    logger.info("MobSpawnSetting 已启用");
+    logger.info("  - 白名单模式: {}", mConfig.whitelistMode ? "启用" : "禁用");
+    logger.info("  - 密度倍率: {:.2f}", mConfig.densityMultiplier);
+    logger.info("  - 全局上限倍率: {:.2f}", mConfig.globalCapMultiplier);
+    logger.info("  - 生成速度: {}x", mConfig.spawnSpeed);
     return true;
 }
 

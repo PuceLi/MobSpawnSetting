@@ -1,21 +1,20 @@
 #include "SpawnerMod.h"
 
 #include "ll/api/memory/Hook.h"
-#include "ll/api/memory/Signature.h"
-#include "ll/api/memory/Memory.h"
 #include "ll/api/io/Logger.h"
 
 #include "mc/world/actor/Mob.h"
 #include "mc/world/level/dimension/Dimension.h"
 #include "mc/world/level/Level.h"
-#include "mc/world/level/Spawner.h"
+#include "mc/world/level/BedrockSpawner.h"
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
+#include "mc/world/level/BlockSource.h"
+#include "mc/world/level/ChunkPos.h"
+#include "mc/world/level/chunk/LevelChunkVolumeData.h"
 
 #include <string>
 #include <regex>
-
-using namespace ll::literals::memory_literals;
 
 namespace SpawnerSetting {
 
@@ -59,7 +58,7 @@ LL_AUTO_TYPE_INSTANCE_HOOK(
     Mob,
     &Mob::$checkSpawnRules,
     bool,
-    bool checkSpawnPosition
+    bool fromSpawner
 ) {
     const auto& config = SpawnerMod::getInstance().getConfig();
 
@@ -104,18 +103,17 @@ LL_AUTO_TYPE_INSTANCE_HOOK(
         if (isTarget) return false;
     }
 
-    return origin(checkSpawnPosition);
+    return origin(fromSpawner);
 }
 
-LL_AUTO_STATIC_HOOK(
-    SpawnerTickHook,
+LL_AUTO_TYPE_INSTANCE_HOOK(
+    BedrockSpawnerTickHook,
     ll::memory::HookPriority::Normal,
-    "48 8B C4 4C 89 48 ? 55"_sig,
-    // 1.21.130.4
+    BedrockSpawner,
+    &BedrockSpawner::$tick,
     void,
-    ::Spawner* spawner,
     ::BlockSource& region,
-    ::LevelChunkVolumeData const& volumeData,
+    ::LevelChunkVolumeData const& levelChunkVolumeData,
     ::ChunkPos const chunkPos
 ) {
     auto& config = SpawnerMod::getInstance().getConfig();
@@ -123,12 +121,11 @@ LL_AUTO_STATIC_HOOK(
     int speed = config.spawnSpeed;
     if (speed < 1) speed = 1;
 
-    auto& mobCount = ll::memory::dAccess<unsigned int>(spawner, 552);
-    unsigned int currentRealCount = mobCount;
+    unsigned int currentRealCount = this->mTotalEntityCount;
 
     for (int i = 0; i < speed; ++i) {
         if (multiplier <= 0.0f || multiplier == 1.0f) {
-            origin(spawner, region, volumeData, chunkPos);
+            origin(region, levelChunkVolumeData, chunkPos);
             continue;
         }
 
@@ -136,21 +133,21 @@ LL_AUTO_STATIC_HOOK(
 
         if (fakeCount >= 200) {
             if (i == 0) {
-                mobCount = currentRealCount;
-                origin(spawner, region, volumeData, chunkPos);
-                currentRealCount = mobCount;
+                this->mTotalEntityCount = currentRealCount;
+                origin(region, levelChunkVolumeData, chunkPos);
+                currentRealCount = this->mTotalEntityCount;
             }
             break;
         }
 
-        mobCount = fakeCount;
-        origin(spawner, region, volumeData, chunkPos);
+        this->mTotalEntityCount = fakeCount;
+        origin(region, levelChunkVolumeData, chunkPos);
 
-        unsigned int newMemCount = mobCount;
-        int delta = (int)newMemCount - (int)fakeCount;
+        unsigned int newCount = this->mTotalEntityCount;
+        int delta = (int)newCount - (int)fakeCount;
         currentRealCount += delta;
-        
-        mobCount = currentRealCount;
+
+        this->mTotalEntityCount = currentRealCount;
     }
 }
 
