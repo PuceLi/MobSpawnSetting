@@ -1,120 +1,251 @@
-**MobSpawnSettings** is a plugin specifically developed for Survival Mode. It provides comprehensive control over natural mob spawning, allowing administrators to customize white/blacklists, bypass vanilla chunk density limits, and more.
+**MobSpawnSettings** is a plugin designed for survival mode that provides natural mob spawn control features, allowing administrators to customize mob spawn blacklists/whitelists, break through vanilla chunk density limits, and more.
 
-[![中文](https://img.shields.io/badge/简体中文-informational?style=for-the-badge)](README_zh.md)
+[![中文](https://img.shields.io/badge/中文-informational?style=for-the-badge)](README_zh.md)
 
 ---
 
-## Features
+## Main Features
 
-1. **White/Blacklist Control**
-
-    - Whitelist Mode: Only allows mobs belonging to specific families (e.g., `zombie`) to spawn; all other natural spawns are prohibited.
+1. **Blacklist/Whitelist Control**
     
-    - Blacklist Mode: Prevents specific mobs in the configuration list from spawning while allowing others normally. Ideal for removing annoying mobs like Creepers.
+    - Set to allow only or block only certain mobs from spawning
 
 2. **Chunk Density Multiplier**
-   
-   - Setting this to `2.0` or higher doubles the number of monsters allowed per chunk.
+    
+    - Modify the number of monsters allowed in each chunk
 
-   - Setting it to `0.5` halves the limit, effectively solving over-spawning issues.
+3. **Modify Global Mob Spawn Cap**
+    
+    - Break through the natural spawn global limit of 200
 
-3. **Global Spawning Cap Adjustment**
-   
-   - In Bedrock Edition, the natural global spawn cap is fixed at 200 regardless of difficulty. This plugin allows you to lower or raise this cap via the config.
+4. **Mob ID / Family Control**
+    
+    - Choose to control mob families or individual mob spawning
 
-4. **Mob ID & Family Control**
-   
-   - Choose to control spawning based on broad biological families or individual entity IDs.
+5. **Modify Mob Spawn Speed**
 
-5. **Spawning Speed Modification**
-   
-   - Increase the frequency of spawn attempts to make mobs appear faster.
+    - Modify check speed to increase mob spawn rate
 
-6. **Regex Support**
-   
-   - Use Regular Expressions for more efficient and flexible spawning rule configurations.
+6. **Regular Expression Support**
+
+    - Use regular expressions to configure spawn rules more efficiently, convenient for configuring addon mobs
+
+7. **Independent Dimension Control**
+
+    - Customize natural spawn settings for each dimension
+
+8. **Independent Mob Control**
+
+    - Control spawn rules for individual mobs
+
+9. **Independent Biome Control**
+
+    - Control spawn rules in specific biomes
+
+10. **Group Size Control**
+
+    - Modify minimum and maximum numbers when spawning in groups
 
 ---
 
-## Configuration (`config.json`)
+## Configuration Files (config.json)
 
-The configuration file is automatically generated at `plugins/MobSpawnSettings/config.json` after the first load.
+Configuration priority: Biome-specific config > Global mob config > Dimension config > Global default config
+After first load, configuration files will be generated in `plugins/MobSpawnSettings/config.json`
 
-### Default Configuration
+### Configuration Guide
 
-```json5
+#### Main Config - config.json
+
+``` json
 {
-    "version": 9,
-    "whitelistMode": false,             // Work Mode: true=Whitelist, false=Blacklist
-    "enableFamilyFilter": true,         // Enable filtering by mob family
+    "version": 12,
+    "whitelistMode": false,             // Working mode: true=whitelist false=blacklist
+    "enableFamilyFilter": true,         // Enable family filtering
     "targetFamilies": [
-        "zombie"                        // Target families (Ref: https://minecraft.fandom.com/wiki/Family)
+        "zombie"                        // Target family, see https://minecraft.fandom.com/wiki/Family
     ],
-    "enableIdentifierFilter": false,    // Enable filtering by entity ID
+    "enableIdentifierFilter": false,    // Enable ID filtering
     "targetMonsterIds": [
-        "minecraft:creeper"             // Target Entity IDs
+        "minecraft:creeper"             // Target ID
     ],
-    "densityMultiplier": 4.0,           // Local density multiplier (>1.0 increases density)
-    "useRegex": true,                   // Enable Regex (supports patterns like ^minecraft:)
-    "globalCapMultiplier": 4.0,         // Global cap multiplier (>1.0 increases max mobs)
-    "spawnSpeed": 2                     // Spawning attempt speed (e.g., 2 = two attempts per tick)
+    "densityMultiplier": 4.0,           // Local density multiplier (>1.0 increases, <1.0 decreases)
+    "useRegex": true,                   // Enable regex (supports patterns like ^minecraft:)
+    "globalCapMultiplier": 4.0,         // Global cap multiplier (>1.0 increases, <1.0 decreases)
+    "spawnSpeed": 2,                    // Spawn attempt speed (integer, attempts per tick)
+    "maxGroupSize": 20,                 // Maximum group size when spawning (-1 for default)
+    "minGroupSize": 19,                 // Minimum group size when spawning (-1 for default)
+    "enableDimensionConfig": false,     // Enable independent dimension settings
+    "enableMobConfig": false,           // Enable independent mob settings
+    "enableBiomeConfig": false          // Enable independent biome settings
 }
+```
 
+#### Biome Config - biomes.json
+
+``` json
+{
+  "version": 1,
+  "biomes": [
+    {
+      "biomeName": "plains",                 // Biome ID
+      "enabled": true,                       // Enable this config (false=use default)
+      "densityMultiplier": 2.0,              // Biome density multiplier (>1.0 increases, <1.0 decreases)
+      "spawnProbabilityMultiplier": 1.0,     // Not yet implemented, no effect
+      "mobConfigs": [                        // Mob configs within this biome
+        {
+          "identifier": "minecraft:cow",     // Mob ID (family support planned)
+          "enabled": true,                   // Allow spawning: true=spawn false=block spawn
+          "spawnProbabilityMultiplier": 1.0, // Not yet implemented, no effect
+          "densityMultiplier": 3.0           // Spawn density multiplier (>1.0 increases, <1.0 decreases)
+        },
+        {
+          "identifier": "minecraft:sheep",
+          "enabled": false,                  // Block sheep spawning in plains
+          "spawnProbabilityMultiplier": 1.0,
+          "densityMultiplier": 1.0
+        }
+      ]
+    }
+  ]
+}
+```
+
+#### Dimension Config - dimensions.json
+
+```json
+{
+  "version": 1,
+  "dimensions": [
+    {
+      "dimensionId": 0,                   // Dimension ID (0=Overworld 1=Nether 2=End, supports custom dimensions)
+      "enabled": true,                    // Enable this config (false=use default)
+      "densityMultiplier": 2.0,           // Dimension density multiplier (>1.0 increases, <1.0 decreases)
+      "globalCapMultiplier": 2.0,         // Global cap multiplier for this dimension
+      "spawnSpeed": 2                     // Spawn attempt speed (integer, attempts per tick)
+    },
+    {
+      "dimensionId": 1,                   // Nether config
+      "enabled": true,
+      "densityMultiplier": 5.0,
+      "globalCapMultiplier": 5.0,
+      "spawnSpeed": 5
+    }
+  ]
+}
+```
+
+#### Mob Config - mobs.json
+
+```json
+{
+  "version": 1,
+  "mobs": [
+    {
+      "identifier": "minecraft:zombie",   // Mob ID
+      "enabled": true,                    // Allow spawning: true=allow false=block
+      "spawnProbabilityMultiplier": 1.0,  // Not yet implemented, no effect
+      "densityMultiplier": 2.0            // Density multiplier for this mob
+    },
+    {
+      "identifier": "minecraft:creeper", 
+      "enabled": false,                   // Block creeper spawning
+      "spawnProbabilityMultiplier": 1.0,
+      "densityMultiplier": 1.0
+    }
+  ]
+}
 ```
 
 ## Configuration Examples
 
-### Disable Creepers
+### Main Config Examples
 
-Prevents Creepers from spawning to protect player structures.
+#### Disable Creeper Spawning
 
-```json
+Don't want creepers blowing up your house
+
+``` json
 {
-    "version": 9,
+    "version": 12,
     "whitelistMode": false,
     "enableFamilyFilter": true,
-    "targetFamilies": ["creeper"],
+    "targetFamilies": [
+        "creeper"
+    ],
     "enableIdentifierFilter": false,
     "targetMonsterIds": [],
-    "densityMultiplier": 1.0,
     "useRegex": false,
+    "densityMultiplier": 1.0,
     "globalCapMultiplier": 1.0,
-    "spawnSpeed": 1
+    "spawnSpeed": 1,
+    "maxGroupSize": -1,
+    "minGroupSize": -1,
+    "enableDimensionConfig": false,
+    "enableMobConfig": false,
+    "enableBiomeConfig": false
 }
-
 ```
 
-### Mob Farm Optimization (High Density)
+#### Mob Farm Optimization (High Density)
 
-Allows all mobs to spawn while significantly increasing the cap and spawn frequency.
+Allow all mobs to spawn with increased cap and speed
 
-```json
+``` json
 {
-    "version": 9,
+    "version": 12,
     "whitelistMode": false,
     "enableFamilyFilter": false,
     "targetFamilies": [],
     "enableIdentifierFilter": false,
     "targetMonsterIds": [],
-    "densityMultiplier": 4.0,
     "useRegex": false,
-    "globalCapMultiplier": 4.0,
-    "spawnSpeed": 100
+    "densityMultiplier": 5.0,
+    "globalCapMultiplier": 5.0,
+    "spawnSpeed": 10,
+    "maxGroupSize": 10,
+    "minGroupSize": 10,
+    "enableDimensionConfig": false,
+    "enableMobConfig": false,
+    "enableBiomeConfig": false
 }
-
 ```
 
-> In Blacklist mode, leaving the list empty allows all naturally spawnable mobs to appear.
+#### Extreme Mode (Don't use on production servers)
+
+Will lag the server
+
+``` json
+{
+    "version": 12,
+    "whitelistMode": false,
+    "enableFamilyFilter": false,
+    "targetFamilies": [],
+    "enableIdentifierFilter": false,
+    "targetMonsterIds": [],
+    "useRegex": false,
+    "densityMultiplier": 5.0,
+    "globalCapMultiplier": 5.0,
+    "spawnSpeed": 10,
+    "maxGroupSize": 10,
+    "minGroupSize": 10,
+    "enableDimensionConfig": false,
+    "enableMobConfig": false,
+    "enableBiomeConfig": false
+}
+```
+
+> Blacklist mode with empty lists = allow all naturally spawnable mobs
 
 ---
 
 ## ⚠️ Performance Warning
 
-- **Setting `globalCapMultiplier` and `spawnSpeed` to high values simultaneously can cause hundreds of entities to spawn instantly, potentially crashing the server.**
+- **Setting both `globalCapMultiplier` and `spawnSpeed` to high values will instantly spawn hundreds of entities in the world**
 
 ---
 
-## Installation(Server)
+## Installation (Server)
 
 ### Using LIP
 
@@ -122,7 +253,7 @@ Allows all mobs to spawn while significantly increasing the cap and spawn freque
 
 ### Manual Installation
 
-Download the latest version from **Releases** and extract it into the `plugins` folder.
+Download the plugin from **Releases** and extract it into the `plugins` folder.
 
 ---
 
