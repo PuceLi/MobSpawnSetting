@@ -38,13 +38,13 @@ struct BiomeConfig {
 
 // 主配置文件
 struct Config {
-    int version = 11;
+    int version = 12;
 
     bool whitelistMode = false;
     bool enableFamilyFilter = false;
-    std::vector<std::string> targetFamilies = {"zombie"};
+    std::vector<std::string> targetFamilies;
     bool enableIdentifierFilter = false;
-    std::vector<std::string> targetMonsterIds = {"minecraft:creeper"};
+    std::vector<std::string> targetMonsterIds;
     bool useRegex = false;
 
     float densityMultiplier = 1.0f;

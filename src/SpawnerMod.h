@@ -22,7 +22,9 @@ public:
     bool load();
     bool enable();
     bool disable();
-    bool reloadConfig();
+    bool unload();
+
+    static void clearCache();
 
 private:
     ll::mod::NativeMod& mSelf;

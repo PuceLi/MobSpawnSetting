@@ -17,11 +17,13 @@
 #include <string>
 #include <regex>
 #include <unordered_map>
+#include <mutex>
 
 namespace SpawnerSetting {
 
 namespace {
 
+std::mutex cacheMutex;
 std::unordered_map<int, const DimensionConfig*> dimensionConfigCache;
 std::unordered_map<std::string, const BiomeConfig*> biomeConfigCache;
 
@@ -31,6 +33,8 @@ const DimensionConfig* getDimensionConfig(int dimensionId) {
     if (!config.enableDimensionConfig) {
         return nullptr;
     }
+
+    std::lock_guard<std::mutex> lock(cacheMutex);
 
     auto it = dimensionConfigCache.find(dimensionId);
     if (it != dimensionConfigCache.end()) {
@@ -56,6 +60,8 @@ const BiomeConfig* getBiomeConfig(const std::string& biomeName) {
         return nullptr;
     }
 
+    std::lock_guard<std::mutex> lock(cacheMutex);
+
     auto it = biomeConfigCache.find(biomeName);
     if (it != biomeConfigCache.end()) {
         return it->second;
@@ -73,9 +79,9 @@ const BiomeConfig* getBiomeConfig(const std::string& biomeName) {
     return nullptr;
 }
 
-const MobSpawnConfig* getMobConfig(const std::string& mobId, const std::string& biomeName, int dimensionId) {
+const MobSpawnConfig* getMobConfig(const std::string& mobId, const std::string& biomeName, int) {
     auto& config = SpawnerMod::getInstance().getConfig();
-	
+
     if (config.enableBiomeConfig && !biomeName.empty()) {
         auto biomeConfig = getBiomeConfig(biomeName);
         if (biomeConfig) {
@@ -86,7 +92,7 @@ const MobSpawnConfig* getMobConfig(const std::string& mobId, const std::string& 
             }
         }
     }
-	
+
     if (config.enableMobConfig) {
         auto& mobConfigs = SpawnerMod::getInstance().getMobConfigs();
         for (const auto& mobConfig : mobConfigs.mobs) {
@@ -95,7 +101,7 @@ const MobSpawnConfig* getMobConfig(const std::string& mobId, const std::string& 
             }
         }
     }
-	
+
     return nullptr;
 }
 
@@ -126,6 +132,14 @@ void applyDensityMultiplier(Dimension* dim) {
         dimensionId, multiplier, originalVal, dim->mMobsPerChunkSurface[0]);
 }
 
+}
+
+void SpawnerMod::clearCache() {
+    std::lock_guard<std::mutex> lock(cacheMutex);
+    dimensionConfigCache.clear();
+    biomeConfigCache.clear();
+}
+
 LL_AUTO_TYPE_INSTANCE_HOOK(
     DimensionInitHook,
     ll::memory::HookPriority::Normal,
@@ -136,9 +150,6 @@ LL_AUTO_TYPE_INSTANCE_HOOK(
 ) {
     origin(structureSetRegistry);
     applyDensityMultiplier(this);
-
-    dimensionConfigCache.clear();
-    biomeConfigCache.clear();
 }
 
 LL_AUTO_TYPE_INSTANCE_HOOK(
@@ -265,5 +276,4 @@ LL_AUTO_TYPE_INSTANCE_HOOK(
     }
 }
 
-}
 } // namespace SpawnerSetting
