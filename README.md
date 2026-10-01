@@ -48,7 +48,7 @@
 
 ---
 
-## Configuration Files (config.json)
+## Configuration Files
 
 Configuration priority: Biome-specific config > Global mob config > Dimension config > Global default config
 After first load, configuration files will be generated in `plugins/MobSpawnSettings/config.json`
