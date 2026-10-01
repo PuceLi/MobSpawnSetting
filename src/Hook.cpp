@@ -12,18 +12,104 @@
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/ChunkPos.h"
 #include "mc/world/level/chunk/LevelChunkVolumeData.h"
+#include "mc/world/level/biome/Biome.h"
 
 #include <string>
 #include <regex>
+#include <unordered_map>
 
 namespace SpawnerSetting {
 
 namespace {
 
+std::unordered_map<int, const DimensionConfig*> dimensionConfigCache;
+std::unordered_map<std::string, const BiomeConfig*> biomeConfigCache;
+
+const DimensionConfig* getDimensionConfig(int dimensionId) {
+    auto& config = SpawnerMod::getInstance().getConfig();
+
+    if (!config.enableDimensionConfig) {
+        return nullptr;
+    }
+
+    auto it = dimensionConfigCache.find(dimensionId);
+    if (it != dimensionConfigCache.end()) {
+        return it->second;
+    }
+
+    auto& dimConfigs = SpawnerMod::getInstance().getDimensionConfigs();
+    for (const auto& dimConfig : dimConfigs.dimensions) {
+        if (dimConfig.dimensionId == dimensionId && dimConfig.enabled) {
+            dimensionConfigCache[dimensionId] = &dimConfig;
+            return &dimConfig;
+        }
+    }
+
+    dimensionConfigCache[dimensionId] = nullptr;
+    return nullptr;
+}
+
+const BiomeConfig* getBiomeConfig(const std::string& biomeName) {
+    auto& config = SpawnerMod::getInstance().getConfig();
+
+    if (!config.enableBiomeConfig) {
+        return nullptr;
+    }
+
+    auto it = biomeConfigCache.find(biomeName);
+    if (it != biomeConfigCache.end()) {
+        return it->second;
+    }
+
+    auto& biomeConfigs = SpawnerMod::getInstance().getBiomeConfigs();
+    for (const auto& biomeConfig : biomeConfigs.biomes) {
+        if (biomeConfig.biomeName == biomeName && biomeConfig.enabled) {
+            biomeConfigCache[biomeName] = &biomeConfig;
+            return &biomeConfig;
+        }
+    }
+
+    biomeConfigCache[biomeName] = nullptr;
+    return nullptr;
+}
+
+const MobSpawnConfig* getMobConfig(const std::string& mobId, const std::string& biomeName, int dimensionId) {
+    auto& config = SpawnerMod::getInstance().getConfig();
+	
+    if (config.enableBiomeConfig && !biomeName.empty()) {
+        auto biomeConfig = getBiomeConfig(biomeName);
+        if (biomeConfig) {
+            for (const auto& mobConfig : biomeConfig->mobConfigs) {
+                if (mobConfig.identifier == mobId) {
+                    return &mobConfig;
+                }
+            }
+        }
+    }
+	
+    if (config.enableMobConfig) {
+        auto& mobConfigs = SpawnerMod::getInstance().getMobConfigs();
+        for (const auto& mobConfig : mobConfigs.mobs) {
+            if (mobConfig.identifier == mobId) {
+                return &mobConfig;
+            }
+        }
+    }
+	
+    return nullptr;
+}
+
 void applyDensityMultiplier(Dimension* dim) {
     auto& config = SpawnerMod::getInstance().getConfig();
-    float multiplier = config.densityMultiplier;
     auto& logger = SpawnerMod::getInstance().getSelf().getLogger();
+
+    int dimensionId = (int)dim->getDimensionId();
+    float multiplier = config.densityMultiplier;
+
+    auto dimConfig = getDimensionConfig(dimensionId);
+    if (dimConfig) {
+        multiplier = dimConfig->densityMultiplier;
+    }
 
     if (multiplier == 1.0f) return;
 
@@ -37,7 +123,7 @@ void applyDensityMultiplier(Dimension* dim) {
     }
 
     logger.info("维度 ID: {} | 密度倍率: {:.1f} | 地表密度上限: {:.1f} -> {:.1f}",
-        (int)dim->getDimensionId(), multiplier, originalVal, dim->mMobsPerChunkSurface[0]);
+        dimensionId, multiplier, originalVal, dim->mMobsPerChunkSurface[0]);
 }
 
 LL_AUTO_TYPE_INSTANCE_HOOK(
@@ -50,6 +136,9 @@ LL_AUTO_TYPE_INSTANCE_HOOK(
 ) {
     origin(structureSetRegistry);
     applyDensityMultiplier(this);
+
+    dimensionConfigCache.clear();
+    biomeConfigCache.clear();
 }
 
 LL_AUTO_TYPE_INSTANCE_HOOK(
@@ -65,6 +154,22 @@ LL_AUTO_TYPE_INSTANCE_HOOK(
     bool isFamilyMatch = false;
     bool isIdMatch = false;
 
+    std::string myId = (std::string const&)this->getActorIdentifier().mFullName;
+
+    int dimensionId = (int)this->getDimensionId();
+    auto& blockSource = this->getDimensionBlockSource();
+    auto biome = blockSource.tryGetBiome(this->getPosition());
+    std::string biomeName;
+    if (biome) {
+        biomeName = biome->mHash->getString();
+    }
+
+    auto mobConfig = getMobConfig(myId, biomeName, dimensionId);
+
+    if (mobConfig && !mobConfig->enabled) {
+        return false;
+    }
+
     if (config.enableFamilyFilter) {
         for (const auto& familyName : config.targetFamilies) {
             if (this->hasFamily(HashedString(familyName.c_str()))) {
@@ -75,7 +180,6 @@ LL_AUTO_TYPE_INSTANCE_HOOK(
     }
 
     if (config.enableIdentifierFilter) {
-        std::string myId = (std::string const&)this->getActorIdentifier().mFullName;
         for (const auto& targetId : config.targetMonsterIds) {
             if (config.useRegex) {
                 try {
@@ -117,8 +221,18 @@ LL_AUTO_TYPE_INSTANCE_HOOK(
     ::ChunkPos const chunkPos
 ) {
     auto& config = SpawnerMod::getInstance().getConfig();
+
+    int dimensionId = (int)region.getDimensionId();
+
     float multiplier = config.globalCapMultiplier;
     int speed = config.spawnSpeed;
+
+    auto dimConfig = getDimensionConfig(dimensionId);
+    if (dimConfig) {
+        multiplier = dimConfig->globalCapMultiplier;
+        speed = dimConfig->spawnSpeed;
+    }
+
     if (speed < 1) speed = 1;
 
     unsigned int currentRealCount = this->mTotalEntityCount;
