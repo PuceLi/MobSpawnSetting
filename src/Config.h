@@ -14,8 +14,6 @@ struct MobSpawnConfig {
     bool enabled = true;                 		// 是否允许生成
     float spawnProbabilityMultiplier = 1.0f; 	// 生成概率倍率
     float densityMultiplier = 1.0f;      		// 密度倍率
-    int minGroupSize = -1;             		  	// 最小群体大小（-1 使用默认值）
-    int maxGroupSize = -1;               		// 最大群体大小（-1 使用默认值）
 };
 
 // 维度配置
@@ -50,6 +48,8 @@ struct Config {
     float densityMultiplier = 1.0f;
     float globalCapMultiplier = 1.0f;
     int spawnSpeed = 1;
+    int minGroupSize = -1;               // 全局最小群体大小（-1 使用默认值）
+    int maxGroupSize = -1;               // 全局最大群体大小（-1 使用默认值）
 
     bool enableDimensionConfig = false;  // 是否启用独立维度配置
     bool enableMobConfig = false;        // 是否启用独立生物配置

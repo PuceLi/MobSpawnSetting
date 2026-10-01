@@ -13,6 +13,10 @@
 #include "mc/world/level/ChunkPos.h"
 #include "mc/world/level/chunk/LevelChunkVolumeData.h"
 #include "mc/world/level/biome/Biome.h"
+#include "mc/world/level/biome/MobSpawnRules.h"
+#include "mc/world/level/biome/MobSpawnHerdInfo.h"
+#include "mc/world/level/biome/SpawnConditions.h"
+#include "mc/util/Random.h"
 
 #include <string>
 #include <regex>
@@ -274,6 +278,32 @@ LL_AUTO_TYPE_INSTANCE_HOOK(
 
         this->mTotalEntityCount = currentRealCount;
     }
+}
+
+LL_AUTO_TYPE_INSTANCE_HOOK(
+    MobSpawnRulesGetSpawnCountHook,
+    ll::memory::HookPriority::Normal,
+    MobSpawnRules,
+    &MobSpawnRules::getSpawnCount,
+    int,
+    ::SpawnConditions const& conditions,
+    ::BlockSource& region,
+    ::Random& random,
+    ::MobSpawnHerdInfo const& herdInfo
+) {
+    int originalCount = origin(conditions, region, random, herdInfo);
+
+    auto& config = SpawnerMod::getInstance().getConfig();
+
+    if (config.minGroupSize > 0 && originalCount < config.minGroupSize) {
+        originalCount = config.minGroupSize;
+    }
+
+    if (config.maxGroupSize > 0 && originalCount > config.maxGroupSize) {
+        originalCount = config.maxGroupSize;
+    }
+
+    return originalCount;
 }
 
 } // namespace SpawnerSetting
