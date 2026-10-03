@@ -17,6 +17,7 @@
 #include "mc/world/level/biome/MobSpawnHerdInfo.h"
 #include "mc/world/level/biome/SpawnConditions.h"
 #include "mc/util/Random.h"
+#include "mc/deps/core/math/IRandom.h"
 
 #include <string>
 #include <regex>
@@ -173,11 +174,8 @@ LL_AUTO_TYPE_INSTANCE_HOOK(
 
     int dimensionId = (int)this->getDimensionId();
     auto& blockSource = this->getDimensionBlockSource();
-    auto biome = blockSource.tryGetBiome(this->getPosition());
-    std::string biomeName;
-    if (biome) {
-        biomeName = biome->mHash->getString();
-    }
+    auto& biome = blockSource.getBiome(this->getPosition());
+    std::string biomeName = biome.mHash->getString();
 
     auto mobConfig = getMobConfig(myId, biomeName, dimensionId);
 
@@ -281,29 +279,33 @@ LL_AUTO_TYPE_INSTANCE_HOOK(
 }
 
 LL_AUTO_TYPE_INSTANCE_HOOK(
-    MobSpawnRulesGetSpawnCountHook,
+    MobSpawnHerdInfoHook,
     ll::memory::HookPriority::Normal,
     MobSpawnRules,
-    &MobSpawnRules::getSpawnCount,
-    int,
-    ::SpawnConditions const& conditions,
-    ::BlockSource& region,
-    ::Random& random,
-    ::MobSpawnHerdInfo const& herdInfo
+    &MobSpawnRules::selectRandomHerd,
+    ::MobSpawnHerdInfo const&,
+    ::IRandom& random
 ) {
-    int originalCount = origin(conditions, region, random, herdInfo);
-
+    auto& herdInfo = origin(random);
     auto& config = SpawnerMod::getInstance().getConfig();
 
-    if (config.minGroupSize > 0 && originalCount < config.minGroupSize) {
-        originalCount = config.minGroupSize;
+    if (config.minGroupSize > 0 || config.maxGroupSize > 0) {
+        auto* mutableHerd = const_cast<::MobSpawnHerdInfo*>(&herdInfo);
+
+        if (config.minGroupSize > 0 && mutableHerd->mMinCount < (uint)config.minGroupSize) {
+            mutableHerd->mMinCount = (uint)config.minGroupSize;
+        }
+
+        if (config.maxGroupSize > 0 && mutableHerd->mMaxCount > (uint)config.maxGroupSize) {
+            mutableHerd->mMaxCount = (uint)config.maxGroupSize;
+        }
+
+        if (mutableHerd->mMinCount > mutableHerd->mMaxCount) {
+            mutableHerd->mMaxCount = mutableHerd->mMinCount;
+        }
     }
 
-    if (config.maxGroupSize > 0 && originalCount > config.maxGroupSize) {
-        originalCount = config.maxGroupSize;
-    }
-
-    return originalCount;
+    return herdInfo;
 }
 
 } // namespace SpawnerSetting
